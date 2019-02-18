@@ -1,0 +1,8 @@
+{
+    "id":"cctv",
+    "description":"CCTV plugin",
+    "activation": false,
+    "resources": false,
+    "cross": true,
+    "version":"0.0.1"
+}
