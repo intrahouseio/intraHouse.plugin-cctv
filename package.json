@@ -8,6 +8,7 @@
     "test": "test"
   },
   "dependencies": {
+    "ws": "^6.1.4"
   },
   "devDependencies": {},
   "scripts": {

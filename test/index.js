@@ -1,10 +1,13 @@
 const child = require('child_process');
+const net = require('net');
+const dgram = require('dgram');
+
 const modulepath = './index.js';
 
 const unitid = 'cctv'
 
 const params = {
-
+  wsport: 8088
 }
 
 const system = {
@@ -15,36 +18,37 @@ const config = [];
 
 const ps = child.fork(modulepath, [unitid]);
 
+
+const udpserver = dgram.createSocket('udp4');
+
+udpserver.on('message', udpserver_message);
+udpserver.on('error', udpserver_error);
+udpserver.on('listening', udpserver_listening);
+
+function udpserver_message(text) {
+  const data = JSON.parse(text.toString())
+//  console.log('-------------SERVER-------------', new Date().toLocaleString());
+//  console.log(data);
+//  console.log('');
+  ps.send(data);
+}
+
+function udpserver_error() {
+
+}
+
+function udpserver_listening() {
+
+}
+
+udpserver.bind(10001);
+
 ps.on('message', data => {
-  if (data.type === 'get' && data.tablename === `system/${unitid}`) {
-    ps.send({ type: 'get', system });
-  }
+  // console.log('-------------PLUGIN-------------', new Date().toLocaleString());
+  // console.log(data);
+  // console.log('');
 
-  if (data.type === 'get' && data.tablename === `params/${unitid}`) {
-    ps.send({ type: 'get', params });
-  }
-
-  if (data.type === 'get' && data.tablename === `config/${unitid}`) {
-    ps.send({ type: 'get', config: {} });
-  }
-
-  if (data.type === 'data') {
-    console.log('-------------data-------------', new Date().toLocaleString());
-    console.log(data.data);
-    console.log('');
-  }
-
-  if (data.type === 'channels') {
-    console.log('-----------channels-----------', new Date().toLocaleString());
-    console.log(data.data);
-    console.log('');
-  }
-
-  if (data.type === 'debug') {
-    console.log('-------------debug------------', new Date().toLocaleString());
-    console.log(data.txt);
-    console.log('');
-  }
+  udpserver.send(JSON.stringify(data), 10000, '127.0.0.1');
 });
 
 ps.on('close', code => {
