@@ -15,13 +15,8 @@ x = new Buffer('ffd8ffe000104a46494600010100000100010000ffdb0043000d090a0b0a080d
 let buf = [x]
 
 function rtsp_jpeg({ id, data }) {
+  buf.push(data.slice(20))
 
-  if (data[0] === 160) {
-    const l = data[data.length - 1];
-    buf.push(data.slice(20, data.length - l))
-  } else {
-    buf.push(data.slice(20))
-  }
 
   if (data[1] === 154) {
     x = Buffer.concat(buf);
