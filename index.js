@@ -1,7 +1,8 @@
 const WebSocket = require('ws');
 const Plugin = require('./lib/plugin');
 const Rtsp = require('./lib/rtsp');
-const fs = require('fs');
+
+const tools = require('./lib/tools');
 
 
 const plugin = new Plugin();
@@ -9,25 +10,41 @@ const plugin = new Plugin();
 const STORE = {
   cams: { },
   channels: { ws: {}, p2p: {} },
+  jpeg: {}
 };
 
-x = new Buffer('ffd8ffe000104a46494600010100000100010000ffdb0043000d090a0b0a080d0b0a0b0e0e0d0f13201513121213271c1e17202e2931302e292d2c333a4a3e333646372c2d405741464c4e525352323e5a615a50604a51524fffdb0043010e0e0e131113261515264f352d354f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4f4fffc00011080168028003012200021101031101ffc4001f0000010501010101010100000000000000000102030405060708090a0bffc400b5100002010303020403050504040000017d01020300041105122131410613516107227114328191a1082342b1c11552d1f02433627282090a161718191a25262728292a3435363738393a434445464748494a535455565758595a636465666768696a737475767778797a838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae1e2e3e4e5e6e7e8e9eaf1f2f3f4f5f6f7f8f9faffc4001f0100030101010101010101010000000000000102030405060708090a0bffc400b51100020102040403040705040400010277000102031104052131061241510761711322328108144291a1b1c109233352f0156272d10a162434e125f11718191a262728292a35363738393a434445464748494a535455565758595a636465666768696a737475767778797a82838485868788898a92939495969798999aa2a3a4a5a6a7a8a9aab2b3b4b5b6b7b8b9bac2c3c4c5c6c7c8c9cad2d3d4d5d6d7d8d9dae2e3e4e5e6e7e8e9eaf2f3f4f5f6f7f8f9faffda000c03010002110311003f00','hex')
-let buf = [x]
 
 function rtsp_jpeg({ id, data }) {
-  buf.push(data.slice(20))
+  const t = data[16];
+  const q = data[17];
+
+  const reset = 64 <= t && t <= 127;
+  const quant = 128  <= q && q <= 255;
 
 
-  if (data[1] === 154) {
-    x = Buffer.concat(buf);
-    fs.writeFileSync('t0.jpg',x)
-    buf = [x];
-    process.exit(0)
+  if (STORE.jpeg[id] === undefined) {
+    STORE.jpeg[id] = { first: true, buffer: [], header: null };
   }
 
+  if (STORE.jpeg[id].first === true) {
+    if (STORE.jpeg[id].header === null) {
+      STORE.jpeg[id].header = tools.genJpegHeader(reset, quant, data)
+    }
 
-  // console.log(data.slice(12))
+    STORE.jpeg[id].buffer.push(STORE.jpeg[id].header);
+  }
 
+  STORE.jpeg[id].buffer.push(tools.sliceJpegData(reset, STORE.jpeg[id].first && quant, data))
+
+  if (STORE.jpeg[id].first === true) {
+    STORE.jpeg[id].first = false;
+  }
+
+  if (data[1] === 154) {
+    rtsp_stream({ id, data: Buffer.concat(STORE.jpeg[id].buffer) })
+    STORE.jpeg[id].buffer = [];
+    STORE.jpeg[id].first = true;
+  }
 }
 
 function rtsp_stream({ id, data }) {
