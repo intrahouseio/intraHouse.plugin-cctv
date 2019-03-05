@@ -69,7 +69,9 @@ function send_channel({ id, data }) {
         STORE.cams[id].subs
           .forEach(channelid => {
             if (STORE.channels.ws[channelid] !== undefined && STORE.channels.ws[channelid].socket.readyState === 1) {
-              STORE.channels.ws[channelid].socket.send(Buffer.concat([Buffer.from([4, Number(id), 0, 0, 0, 0]), data]));
+              const temp = Buffer.concat([Buffer.from([4, 0, 0, 0, 0, 0, 0]), data]);
+              temp.writeUInt16BE(Number(id), 1)
+              STORE.channels.ws[channelid].socket.send(temp);
             }
         });
       }
