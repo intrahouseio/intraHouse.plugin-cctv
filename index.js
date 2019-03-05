@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const Plugin = require('./lib/plugin');
 const Rtsp = require('./lib/rtsp');
+const fs = require('fs');
 
 const tools = require('./lib/tools');
 
@@ -41,20 +42,37 @@ function rtsp_jpeg({ id, data }) {
   }
 
   if (data[1] === 154) {
-    rtsp_stream({ id, data: Buffer.concat(STORE.jpeg[id].buffer) })
+    send_channel({ id, data: Buffer.concat(STORE.jpeg[id].buffer) });
     STORE.jpeg[id].buffer = [];
     STORE.jpeg[id].first = true;
   }
 }
 
 function rtsp_stream({ id, data }) {
+  const type = data[12] & 0x1F;
+  const nri = data[12] & 0x60;
+  const is_start = (data[13] & 0x80) >>> 7;
+  const is_end = (data[13] & 0x40) >>> 6;
+  const payload_type = data[13] & 0x1F;
+
+  if (type !== 28) {
+   console.log( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
+  }
+
+  send_channel({ id, data });
+
+}
+
+function send_channel({ id, data }) {
   if (STORE.cams[id] !== undefined) {
-      STORE.cams[id].subs
-        .forEach(channelid => {
-          if (STORE.channels.ws[channelid] !== undefined && STORE.channels.ws[channelid].socket.readyState === 1) {
-            STORE.channels.ws[channelid].socket.send(Buffer.concat([Buffer.from([4, Number(id), 0, 0, 0, 0]), data]));
-          }
-      });
+      if (STORE.cams[id].config.transport === 'ws') {
+        STORE.cams[id].subs
+          .forEach(channelid => {
+            if (STORE.channels.ws[channelid] !== undefined && STORE.channels.ws[channelid].socket.readyState === 1) {
+              STORE.channels.ws[channelid].socket.send(Buffer.concat([Buffer.from([4, Number(id), 0, 0, 0, 0]), data]));
+            }
+        });
+      }
   }
 }
 
@@ -68,12 +86,27 @@ function rtsp_play({ id, rawdata }) {
     });
 }
 
-function create_rtsp(id, config) {
-  console.log(`rtsp: ${config.id} (${config.url})`);
-  STORE.cams[config.id].rtsp = new Rtsp(config);
-  STORE.cams[config.id].rtsp.on('play', rtsp_play);
-  STORE.cams[config.id].rtsp.on('stream', rtsp_stream);
-  STORE.cams[config.id].rtsp.on('jpeg', rtsp_jpeg);
+function rtsp_close({ id, msg }) {
+
+}
+
+function create_cam(id, config) {
+  switch (config.type) {
+    case 'rtsp/h264':
+        STORE.cams[config.id].rtsp = new Rtsp(config);
+        STORE.cams[config.id].rtsp.on('play', rtsp_play);
+        STORE.cams[config.id].rtsp.on('stream', rtsp_stream);
+        STORE.cams[config.id].rtsp.on('close', rtsp_close);
+      break;
+    case 'rtsp/mjpeg':
+        STORE.cams[config.id].rtsp = new Rtsp(config);
+        STORE.cams[config.id].rtsp.on('play', rtsp_play);
+        STORE.cams[config.id].rtsp.on('stream', rtsp_jpeg);
+        STORE.cams[config.id].rtsp.on('close', rtsp_close);
+      break;
+    default:
+      break;
+  }
 }
 
 function registrationchannel(socket, type, channelid) {
@@ -88,7 +121,7 @@ function sub_cam(id, data) {
   if (STORE.cams[data.params.id] === undefined) {
     STORE.cams[data.params.id] = { config: data.params, rtsp: null, subs: [] };
     STORE.cams[data.params.id].subs.push(id);
-    create_rtsp(id, data.params)
+    create_cam(id, data.params)
   } else {
     if (STORE.cams[data.params.id].rtsp !== null) {
       plugin.transferdata(id, { method: 'rtsp_ok', params: { camid: data.params.id, rawdata: STORE.cams[data.params.id].rtsp } });
