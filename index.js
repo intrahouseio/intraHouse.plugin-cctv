@@ -55,9 +55,7 @@ function rtsp_stream({ id, data }) {
   const is_end = (data[13] & 0x40) >>> 6;
   const payload_type = data[13] & 0x1F;
 
-  if (type !== 28) {
-   console.log( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
-  }
+   // console.log( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
 
   send_channel({ id, data });
 
