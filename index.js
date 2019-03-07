@@ -126,7 +126,7 @@ function create_cam(id, config) {
 function checkchannel(type, channelid) {
   if (type === 'ws') {
     if (STORE.channels.ws[channelid] !== undefined && STORE.channels.ws[channelid].socket.readyState === 1) {
-      STORE.channels.ws[channelid].socket.send(Buffer.from([1]));
+      STORE.channels.ws[channelid].socket.send(Buffer.concat([Buffer.from([1, 0, 0]), Buffer.from(channelid, 'utf8')]));
     }
   }
 }
@@ -222,7 +222,7 @@ function wsmessage(ws, data) {
       registrationchannel(ws, 'ws', data.slice(1).toString())
       break;
     case 2:
-      echochannel('ws', data.slice(1).toString())
+      echochannel('ws', data.slice(3).toString())
       break;
     default:
       break;
