@@ -19,10 +19,13 @@ const STORE = {
   },
 };
 
-const SYSTEM_CHECK_INTERVAL = 1000 * 5;
+const SYSTEM_CHECK_INTERVAL = 1000 * 20;
+const CHANNEL_CHECK_INTERVAL = 1000 * 10;
+
 const SUB_TIMEOUT = 1000 * 120;
 const WS_TIMEOUT = 1000 * 20;
 const P2P_TIMEOUT = 1000 * 20;
+
 
 
 function rtsp_jpeg({ id, data }) {
@@ -120,10 +123,22 @@ function create_cam(id, config) {
   }
 }
 
+function checkchannel(type, channelid) {
+  if (type === 'ws') {
+    if (STORE.channels.ws[channelid] !== undefined && STORE.channels.ws[channelid].socket.readyState === 1) {
+      STORE.channels.ws[channelid].socket.send(Buffer.from([1]));
+    }
+  }
+}
+
 function registrationchannel(socket, type, channelid) {
   console.log(`registrationchannel: ${channelid}`);
   if (type === 'ws') {
-    STORE.channels.ws[channelid] = { socket, activi: Date.now() };
+    STORE.channels.ws[channelid] = {
+      socket,
+      activity: Date.now(),
+      timer: setInterval(() => checkchannel(type, channelid), CHANNEL_CHECK_INTERVAL)
+    };
   }
 }
 
@@ -139,11 +154,22 @@ function removechannel(type, channelid) {
       });
 
       if (STORE.channels.ws[channelid] !== undefined) {
+        clearInterval(delete STORE.channels.ws[channelid].timer)
         delete STORE.channels.ws[channelid];
       }
 
     if (STORE.check.ws[channelid] !== undefined) {
       delete STORE.check.ws[channelid]
+    }
+  }
+}
+
+function echochannel(type, channelid) {
+  console.log(`echochannel: ${channelid}`);
+
+  if (type === 'ws') {
+    if (STORE.channels.ws[channelid] !== undefined) {
+      STORE.channels.ws[channelid].activity = Date.now();
     }
   }
 }
@@ -195,6 +221,9 @@ function wsmessage(ws, data) {
     case 0:
       registrationchannel(ws, 'ws', data.slice(1).toString())
       break;
+    case 2:
+      echochannel('ws', data.slice(1).toString())
+      break;
     default:
       break;
   }
@@ -206,7 +235,7 @@ function wsclose(ws, e) {
     .forEach(key => {
       if (STORE.channels.ws[key] !== undefined && STORE.channels.ws[key].socket) {
         if (STORE.channels.ws[key].socket === ws) {
-          // removechannel('ws', key);
+          removechannel('ws', key);
         }
       }
     })
@@ -251,7 +280,7 @@ function systemCheck() {
 
   ws.forEach(key => {
     if (STORE.channels.ws[key] !== undefined) {
-      const interval = Date.now() - STORE.channels.ws[key].activi;
+      const interval = Date.now() - STORE.channels.ws[key].activity;
       if (interval >= WS_TIMEOUT) {
         STORE.check.ws[key] = true;
       }
@@ -262,7 +291,7 @@ function systemCheck() {
 
   p2p.forEach(key => {
     if (STORE.channels.p2p[key] !== undefined) {
-      const interval = Date.now() - STORE.channels.p2p[key].activi;
+      const interval = Date.now() - STORE.channels.p2p[key].activity;
       if (interval >= WS_TIMEOUT) {
         STORE.check.p2p[key] = true;
       }
