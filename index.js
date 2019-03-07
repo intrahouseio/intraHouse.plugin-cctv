@@ -13,12 +13,16 @@ const STORE = {
   channels: { ws: {}, p2p: {} },
   jpeg: {},
   check: {
-    cams: {}
+    cams: {},
+    ws: {},
+    p2p: {},
   },
 };
 
 const SYSTEM_CHECK_INTERVAL = 1000 * 5;
-const SUB_TIMEOUT = 1000 * 10;
+const SUB_TIMEOUT = 1000 * 120;
+const WS_TIMEOUT = 1000 * 20;
+const P2P_TIMEOUT = 1000 * 20;
 
 
 function rtsp_jpeg({ id, data }) {
@@ -94,7 +98,7 @@ function rtsp_play({ id, rawdata }) {
 
 function rtsp_close({ id, msg }) {
   console.log(`camtimeout: ${id}`);
-  unsub_cam(id);
+  unsub_cam(id, true);
 }
 
 function create_cam(id, config) {
@@ -137,6 +141,10 @@ function removechannel(type, channelid) {
       if (STORE.channels.ws[channelid] !== undefined) {
         delete STORE.channels.ws[channelid];
       }
+
+    if (STORE.check.ws[channelid] !== undefined) {
+      delete STORE.check.ws[channelid]
+    }
   }
 }
 
@@ -155,9 +163,16 @@ function sub_cam(id, data) {
   plugin.transferdata(id, { method: 'cam_ok', params: data.params });
 }
 
-function unsub_cam(camid) {
+function unsub_cam(camid, notification) {
   console.log(`cam_unsub: ${camid}`);
   if (STORE.cams[camid] !== undefined) {
+
+    if (notification) {
+      STORE.cams[camid].subs
+        .forEach(id => {
+          plugin.transferdata(id, { method: 'cam_close', params: { camid } });
+        });
+    }
 
     switch (STORE.cams[camid].config.type) {
       case 'rtsp/mjpeg':
@@ -168,6 +183,10 @@ function unsub_cam(camid) {
         break;
     }
     delete STORE.cams[camid];
+  }
+
+  if (STORE.check.cams[camid] !== undefined) {
+    delete STORE.check.cams[camid];
   }
 }
 
@@ -187,7 +206,7 @@ function wsclose(ws, e) {
     .forEach(key => {
       if (STORE.channels.ws[key] !== undefined && STORE.channels.ws[key].socket) {
         if (STORE.channels.ws[key].socket === ws) {
-          removechannel('ws', key);
+          // removechannel('ws', key);
         }
       }
     })
@@ -229,24 +248,63 @@ function systemCheck() {
   });
 
   console.log(`channels_ws: ${ws.length}`);
+
+  ws.forEach(key => {
+    if (STORE.channels.ws[key] !== undefined) {
+      const interval = Date.now() - STORE.channels.ws[key].activi;
+      if (interval >= WS_TIMEOUT) {
+        STORE.check.ws[key] = true;
+      }
+    }
+  });
+
   console.log(`channels_p2p: ${p2p.length}`);
+
+  p2p.forEach(key => {
+    if (STORE.channels.p2p[key] !== undefined) {
+      const interval = Date.now() - STORE.channels.p2p[key].activi;
+      if (interval >= WS_TIMEOUT) {
+        STORE.check.p2p[key] = true;
+      }
+    }
+  });
+
   console.log('---------------------------');
   console.log('');
 
   const tcams = Object.keys(STORE.check.cams);
+  const tws = Object.keys(STORE.check.ws);
+  const tp2p = Object.keys(STORE.check.p2p);
 
   console.log('system timeout check');
-  console.log(`subs cam: ${tcams.length}`);
+  console.log(`timeout subs: ${tcams.length}`);
+
   tcams.forEach(key => {
     if (STORE.check.cams[key] !== undefined) {
       const interval = STORE.check.cams[key] * SYSTEM_CHECK_INTERVAL;
 
       if (interval > SUB_TIMEOUT) {
-        unsub_cam(key);
+        unsub_cam(key, false);
         delete STORE.check.cams[key];
       } else {
         console.log(`sub cam ${key}: timeout ${interval}`);
       }
+    }
+  });
+
+  console.log(`timeout channels_ws: ${tws.length}`);
+  tws.forEach(key => {
+    if (STORE.check.ws[key] !== undefined) {
+      removechannel('ws', key);
+      delete STORE.check.ws[key]
+    }
+  });
+
+  console.log(`timeout channels_p2p: ${tp2p.length}`);
+  tp2p.forEach(key => {
+    if (STORE.check.p2p[key] !== undefined) {
+      removechannel('p2p', key);
+      delete STORE.check.p2p[key]
     }
   });
   console.log('---------------------------');
