@@ -175,18 +175,22 @@ function echochannel(type, channelid) {
 }
 
 function sub_cam(id, data) {
-  console.log(`cam_sub: ${data.params.id} (${data.params.url})`);
   if (STORE.cams[data.params.id] === undefined) {
+    console.log(`cam_sub: ${data.params.id} (${data.params.url})`);
     STORE.cams[data.params.id] = { config: data.params, rtsp: null, subs: [] };
     STORE.cams[data.params.id].subs.push(id);
     create_cam(id, data.params)
+    plugin.transferdata(id, { method: 'cam_ok', params: data.params });
   } else {
-    if (STORE.cams[data.params.id].rtsp !== null) {
-      plugin.transferdata(id, { method: 'rtsp_ok', params: { camid: data.params.id, rawdata: STORE.cams[data.params.id].rawdata } });
+    plugin.transferdata(id, { method: 'cam_ok', params: data.params });
+    if (STORE.cams[data.params.id].subs.find(subid => subid === id) === undefined) {
+      console.log(`cam_sub: ${data.params.id} (${data.params.url})`);
+      if (STORE.cams[data.params.id].rawdata !== undefined) {
+        plugin.transferdata(id, { method: 'rtsp_ok', params: { camid: data.params.id, rawdata: STORE.cams[data.params.id].rawdata } });
+      }
+      STORE.cams[data.params.id].subs.push(id);
     }
-    STORE.cams[data.params.id].subs.push(id);
   }
-  plugin.transferdata(id, { method: 'cam_ok', params: data.params });
 }
 
 function unsub_cam(camid, notification) {
