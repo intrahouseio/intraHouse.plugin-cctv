@@ -1,9 +1,11 @@
 const Peer = require('simple-peer');
 const wrtc = require('wrtc');
 const WebSocket = require('ws');
+const fs = require('fs');
+
 const Plugin = require('./lib/plugin');
 const Rtsp = require('./lib/rtsp');
-const fs = require('fs');
+const Snapshot = require('./lib/snapshot');
 
 const tools = require('./lib/tools');
 
@@ -147,6 +149,12 @@ function create_cam(id, config) {
         STORE.cams[config.id].rtsp.on('stream', rtsp_jpeg);
         STORE.cams[config.id].rtsp.on('close', rtsp_close);
       break;
+    case 'http/jpeg':
+      STORE.cams[config.id].snap = new Snapshot(config);
+      STORE.cams[config.id].snap.on('play', rtsp_play);
+      STORE.cams[config.id].snap.on('stream', rtsp_jpeg);
+      STORE.cams[config.id].snap.on('close', rtsp_close);
+      break;
     default:
       break;
   }
@@ -254,7 +262,7 @@ function echochannel(type, channelid) {
 function sub_cam(id, data) {
   if (STORE.cams[data.params.id] === undefined) {
     console.log(`cam_sub: ${data.params.id} (${data.params.url})`);
-    STORE.cams[data.params.id] = { config: data.params, rtsp: null, subs: [] };
+    STORE.cams[data.params.id] = { config: data.params, rtsp: null, snap: null, subs: [] };
     STORE.cams[data.params.id].subs.push(id);
     create_cam(id, data.params)
     plugin.transferdata(id, { method: 'cam_ok', params: data.params });
@@ -285,6 +293,9 @@ function unsub_cam(camid, notification) {
       case 'rtsp/mjpeg':
       case 'rtsp/h264':
         STORE.cams[camid].rtsp.destroy();
+        break;
+      case 'http/jpeg':
+        STORE.cams[camid].snap.destroy();
         break;
       default:
         break;
