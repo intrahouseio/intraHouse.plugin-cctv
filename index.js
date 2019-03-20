@@ -1,3 +1,5 @@
+const Peer = require('simple-peer');
+const wrtc = require('wrtc');
 const WebSocket = require('ws');
 const Plugin = require('./lib/plugin');
 const Rtsp = require('./lib/rtsp');
@@ -17,6 +19,23 @@ const STORE = {
     ws: {},
     p2p: {},
   },
+};
+
+const config_wrtc = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:188.225.9.68:3478' },
+    {
+      urls: 'turn:188.225.9.68:3478?transport=tcp',
+      credential: 'intrahouse2019',
+      username: 'intrahouse',
+    },
+    {
+      urls: 'turn:188.225.9.68:3478?transport=udp',
+      credential: 'intrahouse2019',
+      username: 'intrahouse',
+    },
+  ]
 };
 
 const SYSTEM_CHECK_INTERVAL = 1000 * 20;
@@ -86,6 +105,16 @@ function send_channel({ id, data }) {
             }
         });
       }
+      if (STORE.cams[id].config.transport === 'p2p') {
+        STORE.cams[id].subs
+          .forEach(channelid => {
+            if (STORE.channels.p2p[channelid] !== undefined && STORE.channels.p2p[channelid].socket.connected) {
+              const temp = Buffer.concat([Buffer.from([4, 0, 0, 0, 0, 0, 0]), data]);
+              temp.writeUInt16BE(Number(id), 1)
+              STORE.channels.p2p[channelid].socket.send(temp);
+            }
+        });
+      }
   }
 }
 
@@ -129,6 +158,24 @@ function checkchannel(type, channelid) {
       STORE.channels.ws[channelid].socket.send(Buffer.concat([Buffer.from([1, 0, 0]), Buffer.from(channelid, 'utf8')]));
     }
   }
+  if (type === 'p2p') {
+    if (STORE.channels.p2p[channelid] !== undefined && STORE.channels.p2p[channelid].socket.connected) {
+      STORE.channels.p2p[channelid].socket.send(Buffer.concat([Buffer.from([1, 0, 0]), Buffer.from(channelid, 'utf8')]));
+    }
+  }
+}
+
+function channelp2p(channelid) {
+  console.log(`createchannel_p2p: ${channelid}`);
+  STORE.channels.p2p[channelid] = {
+    socket: new Peer({ wrtc: wrtc, config: config_wrtc }),
+    activity: Date.now(),
+  };
+  STORE.channels.p2p[channelid].socket.on('signal', (data) => p2p_signal(channelid, data));
+  STORE.channels.p2p[channelid].socket.on('connect', p2p_connect);
+  STORE.channels.p2p[channelid].socket.on('data', p2p_data);
+  STORE.channels.p2p[channelid].socket.on('error', p2p_error);
+  STORE.channels.p2p[channelid].socket.on('close', (e) => p2p_close(STORE.channels.p2p[channelid].socket, e));
 }
 
 function registrationchannel(socket, type, channelid) {
@@ -139,6 +186,12 @@ function registrationchannel(socket, type, channelid) {
       activity: Date.now(),
       timer: setInterval(() => checkchannel(type, channelid), CHANNEL_CHECK_INTERVAL)
     };
+  }
+  if (type === 'p2p') {
+    if (STORE.channels.p2p[channelid] !== undefined) {
+      STORE.channels.p2p[channelid].activity = Date.now();
+      STORE.channels.p2p[channelid].timer = setInterval(() => checkchannel(type, channelid), CHANNEL_CHECK_INTERVAL)
+    }
   }
 }
 
@@ -162,6 +215,24 @@ function removechannel(type, channelid) {
       delete STORE.check.ws[channelid]
     }
   }
+  if (type === 'p2p') {
+    Object
+      .keys(STORE.cams)
+      .forEach(camid => {
+        if (STORE.cams[camid] !== undefined && STORE.cams[camid].subs) {
+          STORE.cams[camid].subs = STORE.cams[camid].subs.filter(i => i !== channelid)
+        }
+      });
+
+      if (STORE.channels.p2p[channelid] !== undefined) {
+        clearInterval(delete STORE.channels.p2p[channelid].timer)
+        delete STORE.channels.p2p[channelid];
+      }
+
+    if (STORE.check.p2p[channelid] !== undefined) {
+      delete STORE.check.p2p[channelid]
+    }
+  }
 }
 
 function echochannel(type, channelid) {
@@ -170,6 +241,12 @@ function echochannel(type, channelid) {
   if (type === 'ws') {
     if (STORE.channels.ws[channelid] !== undefined) {
       STORE.channels.ws[channelid].activity = Date.now();
+    }
+  }
+
+  if (type === 'p2p') {
+    if (STORE.channels.p2p[channelid] !== undefined) {
+      STORE.channels.p2p[channelid].activity = Date.now();
     }
   }
 }
@@ -220,7 +297,51 @@ function unsub_cam(camid, notification) {
   }
 }
 
-function wsmessage(ws, data) {
+
+function p2p_params(channelid, data) {
+  if (STORE.channels.p2p[channelid] !== undefined) {
+    STORE.channels.p2p[channelid].socket.signal(data.params);
+  }
+}
+
+function p2p_signal(channelid, data) {
+  plugin.transferdata(channelid, { method: 'p2p_params', params: data });
+}
+
+function p2p_connect() {
+  console.log('p2p_connect');
+}
+
+function p2p_data(data) {
+  switch (data[0]) {
+    case 0:
+      registrationchannel(null, 'p2p', data.slice(1).toString())
+      break;
+    case 2:
+      echochannel('p2p', data.slice(3).toString())
+      break;
+    default:
+      break;
+  }
+}
+
+function p2p_error() {
+
+}
+
+function p2p_close(p2p) {
+  Object
+    .keys(STORE.channels.p2p)
+    .forEach(key => {
+      if (STORE.channels.p2p[key] !== undefined && STORE.channels.p2p[key].socket) {
+        if (STORE.channels.p2p[key].socket === p2p) {
+          removechannel('p2p', key);
+        }
+      }
+    })
+}
+
+function ws_message(ws, data) {
   switch (data[0]) {
     case 0:
       registrationchannel(ws, 'ws', data.slice(1).toString())
@@ -233,7 +354,7 @@ function wsmessage(ws, data) {
   }
 }
 
-function wsclose(ws, e) {
+function ws_close(ws, e) {
   Object
     .keys(STORE.channels.ws)
     .forEach(key => {
@@ -245,14 +366,18 @@ function wsclose(ws, e) {
     })
 }
 
-function wsconnection(ws) {
-  ws.on('message', data => wsmessage(ws, data));
-  ws.on('close', e => wsclose(ws, e));
+function ws_connection(ws) {
+  ws.on('message', data => ws_message(ws, data));
+  ws.on('close', e => ws_close(ws, e));
 }
 
 function channel_settings(id, data) {
   if (data.params.type === 'ws') {
     plugin.transferdata(id, { method: 'channel_settings', params: { type: 'ws', port: 8089 } });
+  }
+  if (data.params.type === 'p2p') {
+    channelp2p(id);
+    plugin.transferdata(id, { method: 'channel_settings', params: { type: 'p2p' } });
   }
 }
 
@@ -352,6 +477,9 @@ plugin.on('transferdata', ({ id, data }) => {
     case 'sub_cam':
       sub_cam(id, data);
       break;
+    case 'p2p_params':
+      p2p_params(id, data);
+      break;
     default:
       break;
   }
@@ -359,7 +487,7 @@ plugin.on('transferdata', ({ id, data }) => {
 
 plugin.on('start', () => {
   const wss = new WebSocket.Server({ port: 8089 });
-  wss.on('connection', wsconnection);
+  wss.on('connection', ws_connection);
 
   setInterval(systemCheck, SYSTEM_CHECK_INTERVAL);
 });
