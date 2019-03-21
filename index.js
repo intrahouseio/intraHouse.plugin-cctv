@@ -48,6 +48,9 @@ const WS_TIMEOUT = 1000 * 20;
 const P2P_TIMEOUT = 1000 * 20;
 
 
+function snapshot_jpeg({ id, data }) {
+  send_channel({ id, data });
+}
 
 function rtsp_jpeg({ id, data }) {
   const t = data[16];
@@ -135,6 +138,21 @@ function rtsp_close({ id, msg }) {
   unsub_cam(id, true);
 }
 
+function snapshot_play({ id, rawdata }) {
+  if (STORE.cams[id] !== undefined) {
+    STORE.cams[id].rawdata = rawdata;
+  }
+  STORE.cams[id].subs
+    .forEach(channelid => {
+      plugin.transferdata(channelid, { method: 'rtsp_ok', params: { camid: id, rawdata } });
+    });
+}
+
+function snapshot_close({ id, msg }) {
+  console.log(`camtimeout: ${id}`);
+  unsub_cam(id, true);
+}
+
 function create_cam(id, config) {
   switch (config.type) {
     case 'rtsp/h264':
@@ -150,10 +168,10 @@ function create_cam(id, config) {
         STORE.cams[config.id].rtsp.on('close', rtsp_close);
       break;
     case 'http/jpeg':
-      STORE.cams[config.id].snap = new Snapshot(config);
-      STORE.cams[config.id].snap.on('play', rtsp_play);
-      STORE.cams[config.id].snap.on('stream', rtsp_jpeg);
-      STORE.cams[config.id].snap.on('close', rtsp_close);
+        STORE.cams[config.id].snap = new Snapshot(config);
+        STORE.cams[config.id].snap.on('play', snapshot_play);
+        STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
+        STORE.cams[config.id].snap.on('close', snapshot_close);
       break;
     default:
       break;
