@@ -170,8 +170,8 @@ function create_cam(id, config) {
     case 'http/jpeg':
         STORE.cams[config.id].snap = new Snapshot(config);
         STORE.cams[config.id].snap.on('play', snapshot_play);
-        STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
         STORE.cams[config.id].snap.on('close', snapshot_close);
+        STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
       break;
     default:
       break;
