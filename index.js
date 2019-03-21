@@ -6,6 +6,8 @@ const fs = require('fs');
 const Plugin = require('./lib/plugin');
 const Rtsp = require('./lib/rtsp');
 const Snapshot = require('./lib/snapshot');
+const HttpStream = require('./lib/http-stream');
+
 
 const tools = require('./lib/tools');
 
@@ -173,6 +175,12 @@ function create_cam(id, config) {
         STORE.cams[config.id].snap.on('close', snapshot_close);
         STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
       break;
+    case 'http/mjpeg':
+        STORE.cams[config.id].snap = new HttpStream(config);
+        STORE.cams[config.id].snap.on('play', snapshot_play);
+        STORE.cams[config.id].snap.on('close', snapshot_close);
+        STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
+      break;
     default:
       break;
   }
@@ -201,7 +209,7 @@ function channelp2p(channelid) {
   STORE.channels.p2p[channelid].socket.on('connect', p2p_connect);
   STORE.channels.p2p[channelid].socket.on('data', p2p_data);
   STORE.channels.p2p[channelid].socket.on('error', p2p_error);
-  STORE.channels.p2p[channelid].socket.on('close', (e) => p2p_close(STORE.channels.p2p[channelid].socket, e));
+  STORE.channels.p2p[channelid].socket.on('close', (e) => p2p_close(STORE.channels.p2p[channelid], e));
 }
 
 function registrationchannel(socket, type, channelid) {
@@ -359,15 +367,17 @@ function p2p_error() {
 }
 
 function p2p_close(p2p) {
-  Object
-    .keys(STORE.channels.p2p)
-    .forEach(key => {
-      if (STORE.channels.p2p[key] !== undefined && STORE.channels.p2p[key].socket) {
-        if (STORE.channels.p2p[key].socket === p2p) {
-          removechannel('p2p', key);
+  if (p2p !== undefined) {
+    Object
+      .keys(STORE.channels.p2p)
+      .forEach(key => {
+        if (STORE.channels.p2p[key] !== undefined && STORE.channels.p2p[key].socket) {
+          if (STORE.channels.p2p[key].socket === p2p.socket) {
+            removechannel('p2p', key);
+          }
         }
-      }
-    })
+      })
+  }
 }
 
 function ws_message(ws, data) {
