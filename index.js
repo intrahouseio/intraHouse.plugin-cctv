@@ -320,6 +320,7 @@ function unsub_cam(camid, notification) {
       case 'rtsp/h264':
         STORE.cams[camid].rtsp.destroy();
         break;
+      case 'http/mjpeg':
       case 'http/jpeg':
         STORE.cams[camid].snap.destroy();
         break;
