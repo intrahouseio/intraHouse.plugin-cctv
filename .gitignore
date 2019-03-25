@@ -1,4 +1,4 @@
-build/
+
 .idea/
 iisnode/
 web.config
@@ -7,6 +7,5 @@ dist/
 package-lock.json
 *.secret.js
 debug
-build/*
 /lib/p2p
 cctv_*
