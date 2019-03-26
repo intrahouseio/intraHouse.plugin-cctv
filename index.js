@@ -88,13 +88,13 @@ function rtsp_jpeg({ id, data }) {
 }
 
 function rtsp_stream({ id, data }) {
-  const type = data[12] & 0x1F;
-  const nri = data[12] & 0x60;
-  const is_start = (data[13] & 0x80) >>> 7;
-  const is_end = (data[13] & 0x40) >>> 6;
-  const payload_type = data[13] & 0x1F;
+  // const type = data[12] & 0x1F;
+  // const nri = data[12] & 0x60;
+  // const is_start = (data[13] & 0x80) >>> 7;
+  // const is_end = (data[13] & 0x40) >>> 6;
+  // const payload_type = data[13] & 0x1F;
 
-   // console.log( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
+  // console.log( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
 
   send_channel({ id, data });
 
