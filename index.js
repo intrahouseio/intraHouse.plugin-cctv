@@ -548,7 +548,7 @@ plugin.on('transferdata', ({ id, data }) => {
 });
 
 plugin.on('start', () => {
-  const wss = new WebSocket.Server({ port: 8089 });
+  const wss = new WebSocket.Server(plugin.getSettings());
   wss.on('connection', ws_connection);
 
   setInterval(systemCheck, SYSTEM_CHECK_INTERVAL);

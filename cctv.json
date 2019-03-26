@@ -4,7 +4,20 @@
   "gendevices": 0,
   "single": 1,
   "module": "index.js",
-  "params": [],
+  "params": [
+    {
+      "name": "token",
+      "note": "$Token",
+      "type": "string",
+      "val": "192.168.0.111"
+    },
+    {
+      "name": "port",
+      "note": "$Port",
+      "type": "number",
+      "val": 8089,
+    },
+  ],
   "chpattern": [],
   "genrules": {},
   "commands": []
