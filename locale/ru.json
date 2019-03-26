@@ -1,4 +1,10 @@
 {
   "Token": "Token",
-  "Port": "Trasnport port WS"
+  "Wsport": "Trasnport port WS",
+  "Id": "Id",
+  "Url": "Url",
+  "Type": "Type",
+  "Transport": "Transport",
+  "Protocol": "Protocol",
+  "Cam": "Cam"
 }
