@@ -94,7 +94,7 @@ function rtsp_stream({ id, data }) {
   // const is_end = (data[13] & 0x40) >>> 6;
   // const payload_type = data[13] & 0x1F;
 
-  // console.log( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
+  // plugin.debug( type, nri, payload_type, is_start, is_end, data.slice(0, 25))
 
   send_channel({ id, data });
 
@@ -136,7 +136,7 @@ function rtsp_play({ id, rawdata }) {
 }
 
 function rtsp_close({ id, msg }) {
-  console.log(`camtimeout: ${id}`);
+  plugin.debug(`camtimeout: ${id}`);
   unsub_cam(id, true);
 }
 
@@ -151,8 +151,22 @@ function snapshot_play({ id, rawdata }) {
 }
 
 function snapshot_close({ id, msg }) {
-  console.log(`camtimeout: ${id}`);
+  plugin.debug(`camtimeout: ${id}`);
   unsub_cam(id, true);
+}
+
+function cam_debug({ id, msg }) {
+  plugin.debug(`cam ${id}: Normal -> ${msg}`);
+}
+
+function cam_error({ id, msg }) {
+  plugin.debug(`cam ${id}: Error -> ${msg}`);
+  if (STORE.cams[id] !== undefined) {
+    STORE.cams[id].subs
+      .forEach(tid => {
+        plugin.transferdata(tid, { method: 'cam_error', params: { camid: id, msg } });
+      });
+  }
 }
 
 function create_cam(id, config) {
@@ -162,24 +176,32 @@ function create_cam(id, config) {
         STORE.cams[config.id].rtsp.on('play', rtsp_play);
         STORE.cams[config.id].rtsp.on('stream', rtsp_stream);
         STORE.cams[config.id].rtsp.on('close', rtsp_close);
+        STORE.cams[config.id].rtsp.on('debug', cam_debug);
+        STORE.cams[config.id].rtsp.on('error', cam_error);
       break;
     case 'rtsp/mjpeg':
         STORE.cams[config.id].rtsp = new Rtsp(config);
         STORE.cams[config.id].rtsp.on('play', rtsp_play);
         STORE.cams[config.id].rtsp.on('stream', rtsp_jpeg);
         STORE.cams[config.id].rtsp.on('close', rtsp_close);
+        STORE.cams[config.id].rtsp.on('debug', cam_debug);
+        STORE.cams[config.id].rtsp.on('error', cam_error);
       break;
     case 'http/jpeg':
         STORE.cams[config.id].snap = new Snapshot(config);
         STORE.cams[config.id].snap.on('play', snapshot_play);
         STORE.cams[config.id].snap.on('close', snapshot_close);
         STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
+        STORE.cams[config.id].snap.on('debug', cam_debug);
+        STORE.cams[config.id].snap.on('error', cam_error);
       break;
     case 'http/mjpeg':
         STORE.cams[config.id].snap = new HttpStream(config);
         STORE.cams[config.id].snap.on('play', snapshot_play);
         STORE.cams[config.id].snap.on('close', snapshot_close);
         STORE.cams[config.id].snap.on('stream', snapshot_jpeg);
+        STORE.cams[config.id].snap.on('debug', cam_debug);
+        STORE.cams[config.id].snap.on('error', cam_error);
       break;
     default:
       break;
@@ -200,7 +222,7 @@ function checkchannel(type, channelid) {
 }
 
 function channelp2p(channelid) {
-  console.log(`createchannel_p2p: ${channelid}`);
+  plugin.debug(`createchannel_p2p: ${channelid}`);
   STORE.channels.p2p[channelid] = {
     socket: new Peer({ wrtc: wrtc, config: config_wrtc }),
     activity: Date.now(),
@@ -213,7 +235,7 @@ function channelp2p(channelid) {
 }
 
 function registrationchannel(socket, type, channelid) {
-  console.log(`registrationchannel: ${channelid}`);
+  plugin.debug(`registrationchannel: ${channelid}`);
   if (type === 'ws') {
     STORE.channels.ws[channelid] = {
       socket,
@@ -230,7 +252,7 @@ function registrationchannel(socket, type, channelid) {
 }
 
 function removechannel(type, channelid) {
-  console.log(`removechannel: ${channelid}`);
+  plugin.debug(`removechannel: ${channelid}`);
   if (type === 'ws') {
     Object
       .keys(STORE.cams)
@@ -270,7 +292,7 @@ function removechannel(type, channelid) {
 }
 
 function echochannel(type, channelid) {
-  console.log(`echochannel: ${channelid}`);
+  plugin.debug(`echochannel: ${channelid}`);
 
   if (type === 'ws') {
     if (STORE.channels.ws[channelid] !== undefined) {
@@ -287,7 +309,7 @@ function echochannel(type, channelid) {
 
 function sub_cam(id, data) {
   if (STORE.cams[data.params.id] === undefined) {
-    console.log(`cam_sub: ${data.params.id} (${data.params.url})`);
+    plugin.debug(`cam_sub: ${data.params.id} (${data.params.url})`);
     STORE.cams[data.params.id] = { config: data.params, rtsp: null, snap: null, subs: [] };
     STORE.cams[data.params.id].subs.push(id);
     create_cam(id, data.params)
@@ -295,7 +317,7 @@ function sub_cam(id, data) {
   } else {
     plugin.transferdata(id, { method: 'cam_ok', params: data.params });
     if (STORE.cams[data.params.id].subs.find(subid => subid === id) === undefined) {
-      console.log(`cam_sub: ${data.params.id} (${data.params.url})`);
+      plugin.debug(`cam_sub: ${data.params.id} (${data.params.url})`);
       if (STORE.cams[data.params.id].rawdata !== undefined) {
         plugin.transferdata(id, { method: 'rtsp_ok', params: { camid: data.params.id, rawdata: STORE.cams[data.params.id].rawdata } });
       }
@@ -305,7 +327,7 @@ function sub_cam(id, data) {
 }
 
 function unsub_cam(camid, notification) {
-  console.log(`cam_unsub: ${camid}`);
+  plugin.debug(`cam_unsub: ${camid}`);
   if (STORE.cams[camid] !== undefined) {
 
     if (notification) {
@@ -347,7 +369,7 @@ function p2p_signal(channelid, data) {
 }
 
 function p2p_connect() {
-  console.log('p2p_connect');
+  plugin.debug('p2p_connect');
 }
 
 function p2p_data(data) {
@@ -425,12 +447,12 @@ function systemCheck() {
   const cams = Object.keys(STORE.cams);
   const ws = Object.keys(STORE.channels.ws);
   const p2p = Object.keys(STORE.channels.p2p);
-  console.log('system activity check');
-  console.log(`cams: ${cams.length}`);
+  plugin.debug('system activity check');
+  plugin.debug(`cams: ${cams.length}`);
 
   cams.forEach(key => {
     if (STORE.cams[key] !== undefined && STORE.cams[key].subs) {
-      console.log(`cam ${key}: subs ${STORE.cams[key].subs.length}`);
+      plugin.debug(`cam ${key}: subs ${STORE.cams[key].subs.length}`);
       if (STORE.cams[key].subs.length === 0) {
         if (STORE.check.cams[key] === undefined) {
           STORE.check.cams[key] = 1;
@@ -445,7 +467,7 @@ function systemCheck() {
     }
   });
 
-  console.log(`channels_ws: ${ws.length}`);
+  plugin.debug(`channels_ws: ${ws.length}`);
 
   ws.forEach(key => {
     if (STORE.channels.ws[key] !== undefined) {
@@ -456,7 +478,7 @@ function systemCheck() {
     }
   });
 
-  console.log(`channels_p2p: ${p2p.length}`);
+  plugin.debug(`channels_p2p: ${p2p.length}`);
 
   p2p.forEach(key => {
     if (STORE.channels.p2p[key] !== undefined) {
@@ -467,15 +489,15 @@ function systemCheck() {
     }
   });
 
-  console.log('---------------------------');
-  console.log('');
+  plugin.debug('---------------------------');
+  plugin.debug('');
 
   const tcams = Object.keys(STORE.check.cams);
   const tws = Object.keys(STORE.check.ws);
   const tp2p = Object.keys(STORE.check.p2p);
 
-  console.log('system timeout check');
-  console.log(`timeout subs: ${tcams.length}`);
+  plugin.debug('system timeout check');
+  plugin.debug(`timeout subs: ${tcams.length}`);
 
   tcams.forEach(key => {
     if (STORE.check.cams[key] !== undefined) {
@@ -485,12 +507,12 @@ function systemCheck() {
         unsub_cam(key, false);
         delete STORE.check.cams[key];
       } else {
-        console.log(`sub cam ${key}: timeout ${interval}`);
+        plugin.debug(`sub cam ${key}: timeout ${interval}`);
       }
     }
   });
 
-  console.log(`timeout channels_ws: ${tws.length}`);
+  plugin.debug(`timeout channels_ws: ${tws.length}`);
   tws.forEach(key => {
     if (STORE.check.ws[key] !== undefined) {
       removechannel('ws', key);
@@ -498,15 +520,15 @@ function systemCheck() {
     }
   });
 
-  console.log(`timeout channels_p2p: ${tp2p.length}`);
+  plugin.debug(`timeout channels_p2p: ${tp2p.length}`);
   tp2p.forEach(key => {
     if (STORE.check.p2p[key] !== undefined) {
       removechannel('p2p', key);
       delete STORE.check.p2p[key]
     }
   });
-  console.log('---------------------------');
-  console.log('');
+  plugin.debug('---------------------------');
+  plugin.debug('');
 }
 
 plugin.on('transferdata', ({ id, data }) => {
