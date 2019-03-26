@@ -4,5 +4,5 @@
     "activation": false,
     "resources": false,
     "cross": true,
-    "version":"0.0.1"
+    "version":"2.0.4"
 }
