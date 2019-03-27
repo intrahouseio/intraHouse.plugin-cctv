@@ -57,7 +57,7 @@
               { "id": "p2p", "name": "P2P" }
             ]
           },
-          "comment": { "name": "$Comment", "order": 6, "type": "STRING" },
+          "comment": { "name": "$Comment", "order": 6, "type": "STRING" }
         }
       }
     },
