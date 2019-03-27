@@ -2,9 +2,4 @@
 .idea/
 iisnode/
 web.config
-dist/
 *.log
-package-lock.json
-*.secret.js
-/lib/p2p
-cctv_*
