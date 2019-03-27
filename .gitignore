@@ -6,6 +6,5 @@ dist/
 *.log
 package-lock.json
 *.secret.js
-debug
 /lib/p2p
 cctv_*
