@@ -23,7 +23,7 @@
     "parent": true,
     "scheme": {
       "tools": { "filter": false, "fixed": false, "name": "", "order": -1, "type": "parent", "width": 30 },
-      "id": { "filter": true, "fixed": false, "name": "$Id", "order": 1, "type": "STRING", "width": 75 },
+      "name": { "filter": true, "fixed": false, "name": "$Url", "order": 1, "type": "STRING", "width": 250 },
       "url": { "filter": true, "fixed": false, "name": "$Url", "order": 2, "type": "STRING", "width": 350 },
       "type": { "filter": true, "fixed": false, "name": "$Type", "order": 3, "type": "STRING", "width": 125 },
       "transport": { "filter": false, "fixed": false, "name": "$Transport", "order": 4, "type": "STRING", "width": 150 }
@@ -35,7 +35,9 @@
         "toolbar": false,
         "properties": {
           "url": { "name": "$Url", "order": 0, "type": "STRING" },
-          "type": { "name": "$Type", "order": 1,  "type": "autocomplete",
+          "name": { "name": "$Name", "order": 1, "type": "STRING" },
+          "txt": { "name": "$Txt", "order": 2, "type": "STRING" },
+          "type": { "name": "$Type", "order": 3,  "type": "autocomplete",
             "data": [
               { "id": "rtsp/h264", "name": "RTSP/H264" },
               { "id": "rtsp/mjpeg", "name": "RTSP/MJPEG" },
@@ -43,26 +45,29 @@
               { "id": "http/jpeg", "name": "HTTP/JPEG" }
             ]
           },
-          "protocol": { "name": "$Protocol", "order": 2,  "type": "autocomplete",
+          "protocol": { "name": "$Protocol", "order": 4,  "type": "autocomplete",
             "data": [
               { "id": "tcp", "name": "TCP" },
               { "id": "udp", "name": "UDP" }
             ]
           },
-          "transport": { "name": "$Transport", "order": 3,  "type": "autocomplete",
+          "transport": { "name": "$Transport", "order": 5,  "type": "autocomplete",
             "data": [
               { "id": "ws", "name": "WS" },
               { "id": "p2p", "name": "P2P" }
             ]
-          }
+          },
+          "comment": { "name": "$Comment", "order": 6, "type": "STRING" },
         }
       }
     },
     "default": {
       "url": "rtsp://user:pwd@192.168.0.xxx:port/videoMain",
+      "name": "",
       "type": "rtsp/h264",
       "protocol": "udp",
-      "transport": "p2p"
+      "transport": "p2p",
+      "txt": ""
     },
     "defaultchild": {}
   },

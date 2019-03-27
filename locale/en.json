@@ -6,5 +6,8 @@
   "Type": "Type",
   "Transport": "Transport",
   "Protocol": "Protocol",
-  "Cam": "Cam"
+  "Cam": "Cam",
+  "Name": "Name",
+  "Txt": "Text for Navigator",
+  "Comment": "Comment"
 }

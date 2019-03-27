@@ -531,7 +531,7 @@ function systemCheck() {
   plugin.debug('---------------------------');
   plugin.debug('');
 
-  plugin.debug(`buffer channels_ws: ${tws.length}`);
+  plugin.debug(`buffer channels_ws: ${Object.keys(STORE.channels.ws).length}`);
   Object.keys(STORE.channels.ws).forEach(key => {
     if (STORE.channels.ws[key] !== undefined && STORE.channels.ws[key].socket) {
       plugin.debug(`channel ${key}: ${(STORE.channels.ws[key].socket.bufferedAmount / 1024 / 1024).toFixed(2)} mb`);
