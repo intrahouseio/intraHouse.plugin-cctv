@@ -530,6 +530,15 @@ function systemCheck() {
   });
   plugin.debug('---------------------------');
   plugin.debug('');
+
+  plugin.debug(`buffer channels_ws: ${tws.length}`);
+  Object.keys(STORE.channels.ws).forEach(key => {
+    if (STORE.channels.ws[key] !== undefined && STORE.channels.ws[key].socket) {
+      plugin.debug(`channel ${key}: ${STORE.channels.ws[key].socket.bufferedAmount}`);
+    }
+  });
+  plugin.debug('---------------------------');
+  plugin.debug('');
 }
 
 plugin.on('transferdata', ({ id, data }) => {
