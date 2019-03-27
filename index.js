@@ -264,6 +264,7 @@ function removechannel(type, channelid) {
 
       if (STORE.channels.ws[channelid] !== undefined) {
         clearInterval(delete STORE.channels.ws[channelid].timer)
+        STORE.channels.ws[channelid].socket.destroy();
         delete STORE.channels.ws[channelid];
       }
 
