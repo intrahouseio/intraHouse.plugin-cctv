@@ -283,6 +283,7 @@ function removechannel(type, channelid) {
 
       if (STORE.channels.p2p[channelid] !== undefined) {
         clearInterval(delete STORE.channels.p2p[channelid].timer)
+        STORE.channels.p2p[channelid].socket.destroy();
         delete STORE.channels.p2p[channelid];
       }
 
