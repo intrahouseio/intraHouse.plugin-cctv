@@ -1,10 +1,10 @@
 {
   "Token": "License key",
-  "Wsport": "Trasnport port WS",
+  "Wsport": "Trasnport port WebSocket",
   "Id": "Id",
   "Url": "Url",
   "Type": "Type",
-  "Transport": "Transport",
+  "Transport": "Transport (Client - Server)",
   "Protocol": "Protocol",
   "Cam": "Cam",
   "Name": "Наименование",

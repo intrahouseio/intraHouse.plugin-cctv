@@ -16,14 +16,14 @@
       "name": "wsport",
       "note": "$Wsport",
       "type": "number",
-      "val": 8089
+      "val": 8099
     }
   ],
   "sch": {
     "parent": true,
     "scheme": {
       "tools": { "filter": false, "fixed": false, "name": "", "order": -1, "type": "parent", "width": 30 },
-      "name": { "filter": true, "fixed": false, "name": "$Url", "order": 1, "type": "STRING", "width": 250 },
+      "name": { "filter": true, "fixed": false, "name": "$Name", "order": 1, "type": "STRING", "width": 250 },
       "url": { "filter": true, "fixed": false, "name": "$Url", "order": 2, "type": "STRING", "width": 350 },
       "type": { "filter": true, "fixed": false, "name": "$Type", "order": 3, "type": "STRING", "width": 125 },
       "transport": { "filter": false, "fixed": false, "name": "$Transport", "order": 4, "type": "STRING", "width": 150 }
@@ -45,7 +45,7 @@
               { "id": "http/jpeg", "name": "HTTP/JPEG" }
             ]
           },
-          "protocol": { "name": "$Protocol", "order": 4,  "type": "autocomplete",
+          "protocol": { "name": "$Protocol", "order": 4,  "type": "autocomplete", "visible": "(data.type === 'rtsp/h264' || data.type === 'rtsp/mjpeg')",
             "data": [
               { "id": "tcp", "name": "TCP" },
               { "id": "udp", "name": "UDP" }
@@ -53,7 +53,7 @@
           },
           "transport": { "name": "$Transport", "order": 5,  "type": "autocomplete",
             "data": [
-              { "id": "ws", "name": "WS" },
+              { "id": "ws", "name": "WebSocket" },
               { "id": "p2p", "name": "P2P" }
             ]
           },
