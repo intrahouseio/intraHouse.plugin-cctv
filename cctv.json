@@ -23,10 +23,11 @@
     "parent": true,
     "scheme": {
       "tools": { "filter": false, "fixed": false, "name": "", "order": -1, "type": "parent", "width": 30 },
-      "name": { "filter": true, "fixed": false, "name": "$Name", "order": 1, "type": "STRING", "width": 250 },
-      "url": { "filter": true, "fixed": false, "name": "$Url", "order": 2, "type": "STRING", "width": 350 },
-      "type": { "filter": true, "fixed": false, "name": "$Type", "order": 3, "type": "STRING", "width": 125 },
-      "transport": { "filter": false, "fixed": false, "name": "$Transport", "order": 4, "type": "STRING", "width": 150 }
+      "order": { "filter": true, "fixed": false, "name": "$Order", "order": 2, "type": "NUMBER", "width": 100 },
+      "name": { "filter": true, "fixed": false, "name": "$Name", "order": 3, "type": "STRING", "width": 250 },
+      "url": { "filter": true, "fixed": false, "name": "$Url", "order": 4, "type": "STRING", "width": 350 },
+      "type": { "filter": true, "fixed": false, "name": "$Type", "order": 5, "type": "STRING", "width": 125 },
+      "transport": { "filter": false, "fixed": false, "name": "$Transport", "order": 6, "type": "STRING", "width": 150 }
     },
     "record": {
       "cam": {
@@ -35,9 +36,10 @@
         "toolbar": false,
         "properties": {
           "url": { "name": "$Url", "order": 0, "type": "STRING" },
-          "name": { "name": "$Name", "order": 1, "type": "STRING" },
-          "txt": { "name": "$Txt", "order": 2, "type": "STRING" },
-          "type": { "name": "$Type", "order": 3,  "type": "autocomplete",
+          "order": { "name": "$Order", "order": 1, "type": "NUMBER" },
+          "name": { "name": "$Name", "order": 2, "type": "STRING" },
+          "txt": { "name": "$Txt", "order": 3, "type": "STRING" },
+          "type": { "name": "$Type", "order": 4,  "type": "autocomplete",
             "data": [
               { "id": "rtsp/h264", "name": "RTSP/H264" },
               { "id": "rtsp/mjpeg", "name": "RTSP/MJPEG" },
@@ -45,24 +47,25 @@
               { "id": "http/jpeg", "name": "HTTP/JPEG" }
             ]
           },
-          "protocol": { "name": "$Protocol", "order": 4,  "type": "autocomplete", "visible": "(data.type === 'rtsp/h264' || data.type === 'rtsp/mjpeg')",
+          "protocol": { "name": "$Protocol", "order": 5,  "type": "autocomplete", "visible": "(data.type === 'rtsp/h264' || data.type === 'rtsp/mjpeg')",
             "data": [
               { "id": "tcp", "name": "TCP" },
               { "id": "udp", "name": "UDP" }
             ]
           },
-          "transport": { "name": "$Transport", "order": 5,  "type": "autocomplete",
+          "transport": { "name": "$Transport", "order": 6,  "type": "autocomplete",
             "data": [
               { "id": "ws", "name": "WebSocket" },
               { "id": "p2p", "name": "P2P" }
             ]
           },
-          "comment": { "name": "$Comment", "order": 6, "type": "STRING" }
+          "comment": { "name": "$Comment", "order": 7, "type": "STRING" }
         }
       }
     },
     "default": {
       "url": "rtsp://user:pwd@192.168.0.xxx:port/videoMain",
+      "order": 0,
       "name": "",
       "type": "rtsp/h264",
       "protocol": "udp",

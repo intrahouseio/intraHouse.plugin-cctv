@@ -7,7 +7,7 @@ const modulepath = './index.js';
 const unitid = 'cctv'
 
 const params = {
-  wsport: 8089
+  wsport: 8099
 }
 
 const system = {

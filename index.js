@@ -436,7 +436,9 @@ function ws_connection(ws) {
 
 function channel_settings(id, data) {
   if (data.params.type === 'ws') {
-    plugin.transferdata(id, { method: 'channel_settings', params: { type: 'ws', port: 8089 } });
+    const settings = plugin.getSettings();
+    console.warn(settings);
+    plugin.transferdata(id, { method: 'channel_settings', params: { type: 'ws', port: settings.wsport || 8099 } });
   }
   if (data.params.type === 'p2p') {
     channelp2p(id);
@@ -559,7 +561,8 @@ plugin.on('transferdata', ({ id, data }) => {
 
 plugin.on('start', () => {
   const settings = plugin.getSettings();
-  const wss = new WebSocket.Server({ port: settings.wsport || 8089 });
+  plugin.debug(`transport WebSocket: ${settings.wsport || 8099}`)
+  const wss = new WebSocket.Server({ port: settings.wsport || 8099 });
   wss.on('connection', ws_connection);
 
   setInterval(systemCheck, SYSTEM_CHECK_INTERVAL);
