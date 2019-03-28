@@ -1,6 +1,7 @@
 {
   "Token": "License key",
   "Wsport": "Trasnport port WebSocket",
+  "Order": "№ пп",
   "Id": "Id",
   "Url": "Url",
   "Type": "Type",

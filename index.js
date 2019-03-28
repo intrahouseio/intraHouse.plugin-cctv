@@ -437,7 +437,6 @@ function ws_connection(ws) {
 function channel_settings(id, data) {
   if (data.params.type === 'ws') {
     const settings = plugin.getSettings();
-    console.warn(settings);
     plugin.transferdata(id, { method: 'channel_settings', params: { type: 'ws', port: settings.wsport || 8099 } });
   }
   if (data.params.type === 'p2p') {
