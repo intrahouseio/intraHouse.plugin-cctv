@@ -2,6 +2,7 @@
   "id": "cctv",
   "description": "CCTV plugin",
   "gendevices": 0,
+  "restartOnChannelsChange":1,
   "single": 1,
   "smart": 1,
   "module": "index.js",
