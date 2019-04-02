@@ -363,6 +363,7 @@ function close_cam(channelid, camid) {
   if (STORE.cams[camid] !== undefined && STORE.cams[camid].subs) {
     const index = STORE.cams[camid].subs.findIndex(i => i === channelid);
     if (index !== -1) {
+      plugin.debug(`cam_unsub: ${camid}`);
       STORE.cams[camid].subs.splice(index, 1)
     }
   }
