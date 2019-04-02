@@ -318,11 +318,11 @@ function sub_cam(id, data) {
     plugin.transferdata(id, { method: 'cam_ok', params: data.params });
   } else {
     plugin.transferdata(id, { method: 'cam_ok', params: data.params });
+    if (STORE.cams[data.params.id].rawdata !== undefined) {
+      plugin.transferdata(id, { method: 'rtsp_ok', params: { camid: data.params.id, rawdata: STORE.cams[data.params.id].rawdata } });
+    }
     if (STORE.cams[data.params.id].subs.find(subid => subid === id) === undefined) {
       plugin.debug(`cam_sub: ${data.params.id} (${data.params.url})`);
-      if (STORE.cams[data.params.id].rawdata !== undefined) {
-        plugin.transferdata(id, { method: 'rtsp_ok', params: { camid: data.params.id, rawdata: STORE.cams[data.params.id].rawdata } });
-      }
       STORE.cams[data.params.id].subs.push(id);
     }
   }
@@ -359,6 +359,14 @@ function unsub_cam(camid, notification) {
   }
 }
 
+function close_cam(channelid, camid) {
+  if (STORE.cams[camid] !== undefined && STORE.cams[camid].subs) {
+    const index = STORE.cams[camid].subs.findIndex(i => i === channelid);
+    if (index !== -1) {
+      STORE.cams[camid].subs.splice(index, 1)
+    }
+  }
+}
 
 function p2p_params(channelid, data) {
   if (STORE.channels.p2p[channelid] !== undefined) {
@@ -550,6 +558,9 @@ plugin.on('transferdata', ({ id, data }) => {
       break;
     case 'sub_cam':
       sub_cam(id, data);
+      break;
+    case 'close_cam':
+      close_cam(id, data.params.camid)
       break;
     case 'p2p_params':
       p2p_params(id, data);
