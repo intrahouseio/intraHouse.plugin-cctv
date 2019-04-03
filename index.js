@@ -136,7 +136,7 @@ function rtsp_play({ id, rawdata }) {
 }
 
 function rtsp_close({ id, msg }) {
-  plugin.debug(`camtimeout: ${id}`);
+  plugin.debug(`cam: ${id}, Close -> ${msg}`);
   unsub_cam(id, true);
 }
 
@@ -151,7 +151,7 @@ function snapshot_play({ id, rawdata }) {
 }
 
 function snapshot_close({ id, msg }) {
-  plugin.debug(`camtimeout: ${id}`);
+  plugin.debug(`cam: ${id}, Close -> ${msg}`);
   unsub_cam(id, true);
 }
 
