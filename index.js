@@ -545,7 +545,11 @@ function systemCheck() {
   plugin.debug(`buffer channels_ws: ${Object.keys(STORE.channels.ws).length}`);
   Object.keys(STORE.channels.ws).forEach(key => {
     if (STORE.channels.ws[key] !== undefined && STORE.channels.ws[key].socket) {
-      plugin.debug(`channel ${key}: ${(STORE.channels.ws[key].socket.bufferedAmount / 1024 / 1024).toFixed(2)} mb`);
+      const size = (STORE.channels.ws[key].socket.bufferedAmount / 1024 / 1024).toFixed(2)
+      plugin.debug(`channel ${key}: ${size} mb`);
+      if (size >= 40) {
+        removechannel('ws', key);
+      }
     }
   });
   plugin.debug('---------------------------');
