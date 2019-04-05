@@ -223,20 +223,23 @@ function checkchannel(type, channelid) {
 
 function channelp2p(channelid) {
   plugin.debug(`createchannel_p2p: ${channelid}`);
-  STORE.channels.p2p[channelid] = {
-    socket: new Peer({ wrtc: wrtc, config: config_wrtc }),
-    activity: Date.now(),
-  };
-  STORE.channels.p2p[channelid].socket.on('signal', (data) => p2p_signal(channelid, data));
-  STORE.channels.p2p[channelid].socket.on('connect', p2p_connect);
-  STORE.channels.p2p[channelid].socket.on('data', p2p_data);
-  STORE.channels.p2p[channelid].socket.on('error', p2p_error);
-  STORE.channels.p2p[channelid].socket.on('close', (e) => p2p_close(STORE.channels.p2p[channelid], e));
+  if (STORE.channels.p2p[channelid] === undefined) {
+    STORE.channels.p2p[channelid] = {
+      socket: new Peer({ wrtc: wrtc, config: config_wrtc }),
+      activity: Date.now(),
+      state: 0,
+    };
+    STORE.channels.p2p[channelid].socket.on('signal', (data) => p2p_signal(channelid, data));
+    STORE.channels.p2p[channelid].socket.on('connect', p2p_connect);
+    STORE.channels.p2p[channelid].socket.on('data', p2p_data);
+    STORE.channels.p2p[channelid].socket.on('error', p2p_error);
+    STORE.channels.p2p[channelid].socket.on('close', (e) => p2p_close(STORE.channels.p2p[channelid], e));
+  }
 }
 
 function registrationchannel(socket, type, channelid) {
   plugin.debug(`registrationchannel: ${channelid}`);
-  if (type === 'ws') {
+  if (type === 'ws' && STORE.channels.ws[channelid] === undefined) {
     STORE.channels.ws[channelid] = {
       socket,
       activity: Date.now(),
@@ -244,7 +247,8 @@ function registrationchannel(socket, type, channelid) {
     };
   }
   if (type === 'p2p') {
-    if (STORE.channels.p2p[channelid] !== undefined) {
+    if (STORE.channels.p2p[channelid] !== undefined && STORE.channels.p2p[channelid].state === 0) {
+      STORE.channels.p2p[channelid].state = 1;
       STORE.channels.p2p[channelid].activity = Date.now();
       STORE.channels.p2p[channelid].timer = setInterval(() => checkchannel(type, channelid), CHANNEL_CHECK_INTERVAL)
     }
