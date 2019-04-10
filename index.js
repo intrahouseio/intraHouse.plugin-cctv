@@ -561,12 +561,6 @@ function systemCheck() {
   plugin.debug('');
 }
 
-function saveJpeg(data) {
-  const path = `${plugin.system.tempDir || '/var/lib/intrahouse-c/projects/project_1553506031/temp'}/snapshot/`;
-  const name = `snap_${Date.now()}.jpg`
-  fs.writeFileSync(path + name, data);
-}
-
 plugin.on('transferdata', ({ id, data }) => {
   switch (data.method) {
     case 'create_channel':
@@ -589,16 +583,29 @@ plugin.on('transferdata', ({ id, data }) => {
 plugin.on('command', (command) => {
   if (command.type === 'snap') {
     const cam = plugin.channels.find(i => i.id === command.camid)
-    console.log(plugin.channels,command.camid, cam)
-    if (cam !== undefined) {
-      command.resolve({ filename: '123' })
+    if (cam !== undefined && cam.settings) {
+      const snap = cam.settings.find(i => i.settings_type === 'snap');
+      if (snap) {
+        jpeg(snap.snap_url, snap.snap_timeout)
+          .then((data) => {
+            const path = `${plugin.system.tempdir}/snapshot/`;
+            const filename = `snap_${Date.now()}.jpg`;
+            try {
+              fs.writeFileSync(path + filename, data);
+              command.resolve({ filename });
+            } catch (e) {
+              command.reject(e.message);
+            }
+          })
+          .catch((msg) => command.reject(msg));
+      } else {
+        command.reject(`no snapshot option for camera ${command.camid}`)
+      }
     } else {
-      command.reject(`No snapshot option for camera ${command.camid}`)
+      command.reject(`no snapshot option for camera ${command.camid}`)
     }
     /*
-    jpeg(undefined, 10)
-      .then((data) => saveJpeg(data))
-      .catch((msg) => console.log(msg));
+
       */
   }
 });
