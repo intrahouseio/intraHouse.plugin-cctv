@@ -21,14 +21,13 @@
     }
   ],
   "sch": {
-    "parent": true,
+    "parent": false,
     "scheme": {
-      "tools": { "filter": false, "fixed": false, "name": "", "order": -1, "type": "parent", "width": 30 },
       "order": { "filter": true, "fixed": false, "name": "$Order", "order": 2, "type": "NUMBER", "width": 100 },
-      "name": { "filter": true, "fixed": false, "name": "$Name", "order": 3, "type": "STRING", "width": 250 },
-      "url": { "filter": true, "fixed": false, "name": "$Url", "order": 4, "type": "STRING", "width": 350 },
-      "type": { "filter": true, "fixed": false, "name": "$Type", "order": 5, "type": "STRING", "width": 125 },
-      "transport": { "filter": false, "fixed": false, "name": "$Transport", "order": 6, "type": "STRING", "width": 150 }
+      "type": { "filter": true, "fixed": false, "name": "$Type", "order": 3, "type": "STRING", "width": 140 },
+      "name": { "filter": true, "fixed": false, "name": "$Name", "order": 4, "type": "STRING", "width": 250 },
+      "url": { "filter": true, "fixed": false, "name": "$Url", "order": 5, "type": "STRING", "width": 350 },
+      "transport": { "filter": false, "fixed": false, "name": "$Transport", "order": 7, "type": "STRING", "width": 150 }
     },
     "record": {
       "cam": {
@@ -36,11 +35,12 @@
         "order": 0,
         "toolbar": false,
         "properties": {
-          "url": { "name": "$Url", "order": 0, "type": "STRING" },
-          "order": { "name": "$Order", "order": 1, "type": "NUMBER" },
-          "name": { "name": "$Name", "order": 2, "type": "STRING" },
-          "txt": { "name": "$Txt", "order": 3, "type": "STRING" },
-          "type": { "name": "$Type", "order": 4,  "type": "autocomplete",
+          "id": { "name": "$Id", "order": 1, "type": "STRING", "visible": "!data.parentid", "disabled": "id"},
+          "url": { "name": "$Url", "order": 2, "type": "STRING", "visible": "!data.parentid" },
+          "order": { "name": "$Order", "order": 3, "type": "NUMBER" },
+          "name": { "name": "$Name", "order": 4, "type": "STRING" },
+          "txt": { "name": "$Txt", "order": 5, "type": "STRING" },
+          "type": { "name": "$Type", "order": 6,  "type": "autocomplete", "visible": "!data.parentid",
             "data": [
               { "id": "rtsp/h264", "name": "RTSP/H264" },
               { "id": "rtsp/mjpeg", "name": "RTSP/MJPEG" },
@@ -48,19 +48,43 @@
               { "id": "http/jpeg", "name": "HTTP/JPEG" }
             ]
           },
-          "protocol": { "name": "$Protocol", "order": 5,  "type": "autocomplete", "visible": "(data.type === 'rtsp/h264' || data.type === 'rtsp/mjpeg')",
+          "protocol": { "name": "$Protocol", "order": 7,  "type": "autocomplete", "visible": "(data.type === 'rtsp/h264' || data.type === 'rtsp/mjpeg')",
             "data": [
               { "id": "tcp", "name": "TCP" },
               { "id": "udp", "name": "UDP" }
             ]
           },
-          "transport": { "name": "$Transport", "order": 6,  "type": "autocomplete",
+          "transport": { "name": "$Transport", "order": 8,  "type": "autocomplete",
             "data": [
               { "id": "ws", "name": "WebSocket" },
               { "id": "p2p", "name": "P2P" }
             ]
           },
-          "comment": { "name": "$Comment", "order": 7, "type": "STRING" }
+          "comment": { "name": "$Comment", "order": 9, "type": "STRING" }
+        }
+      },
+      "ext": {
+        "name": "$Ext",
+        "order": 2,
+        "toolbar": false,
+        "properties": {
+          "settings": { "name": "$Settings", "order": 8, "type": "multi",
+            "data": {
+              "scheme": {
+                "settings_type": { "name": "$ChildType", "order": 10,  "type": "autocomplete",
+                  "data": [
+                    { "id": "snap", "name": "SNAPSHOT" }
+                  ]
+                },
+                "snap_url": { "name": "$SnapUrl", "order": 11, "type": "STRING" }
+                },
+                "default": {
+                  "settings_type": "snap",
+                  "snap_url": "http://admin:123456@192.168.0.64:80/ISAPI/Streaming/channels/101/picture?snapShotImageType=JPEG",
+                  "snap_timeout": 10
+                }
+              }
+           }
         }
       }
     },
@@ -71,9 +95,18 @@
       "type": "rtsp/h264",
       "protocol": "udp",
       "transport": "p2p",
-      "txt": ""
+      "txt": "",
+      "settings": [
+        {
+          "settings_type": "snap",
+          "snap_url": "http://admin:123456@192.168.0.64:80/ISAPI/Streaming/channels/101/picture?snapShotImageType=JPEG",
+          "snap_timeout": 10
+        }
+      ]
     },
-    "defaultchild": {}
+    "defaultchild": {
+
+    }
   },
   "chpattern": [],
   "genrules": {},

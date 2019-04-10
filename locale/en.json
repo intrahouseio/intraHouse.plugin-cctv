@@ -10,5 +10,10 @@
   "Cam": "Cam",
   "Name": "Name",
   "Txt": "Text for Navigator",
-  "Comment": "Comment"
+  "Comment": "Comment",
+  "ChildType": "Type",
+  "SnapUrl": "Url",
+  "SnapTimeout": "Timeout",
+  "Ext": "Options",
+  "Settings": "Setting"
 }

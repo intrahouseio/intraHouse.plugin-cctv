@@ -7,8 +7,13 @@
   "Type": "Type",
   "Transport": "Transport (Client - Server)",
   "Protocol": "Protocol",
-  "Cam": "Cam",
+  "Cam": "Камера",
   "Name": "Наименование",
   "Txt": "Текст для навигатора",
-  "Comment": "Комментарий"
+  "Comment": "Комментарий",
+  "ChildType": "Type",
+  "SnapUrl": "Url",
+  "SnapTimeout": "Timeout",
+  "Ext": "Дополнительно",
+  "Settings": "Настройка"
 }

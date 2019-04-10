@@ -7,6 +7,7 @@ const Plugin = require('./lib/plugin');
 const Rtsp = require('./lib/rtsp');
 const Snapshot = require('./lib/snapshot');
 const HttpStream = require('./lib/http-stream');
+const jpeg = require('./lib/jpeg');
 
 
 const tools = require('./lib/tools');
@@ -560,6 +561,12 @@ function systemCheck() {
   plugin.debug('');
 }
 
+function saveJpeg(data) {
+  const path = `${plugin.system.tempDir || '/var/lib/intrahouse-c/projects/project_1553506031/temp'}/snapshot/`;
+  const name = `snap_${Date.now()}.jpg`
+  fs.writeFileSync(path + name, data);
+}
+
 plugin.on('transferdata', ({ id, data }) => {
   switch (data.method) {
     case 'create_channel':
@@ -576,6 +583,14 @@ plugin.on('transferdata', ({ id, data }) => {
       break;
     default:
       break;
+  }
+});
+
+plugin.on('command', (command) => {
+  if (command === 'snap') {
+    jpeg(undefined, 10)
+      .then((data) => saveJpeg(data))
+      .catch((msg) => console.log(msg));
   }
 });
 
