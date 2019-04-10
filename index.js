@@ -587,10 +587,19 @@ plugin.on('transferdata', ({ id, data }) => {
 });
 
 plugin.on('command', (command) => {
-  if (command === 'snap') {
+  if (command.type === 'snap') {
+    const cam = plugin.channels.find(i => i.id === command.camid)
+    console.log(plugin.channels,command.camid, cam)
+    if (cam !== undefined) {
+      command.resolve({ filename: '123' })
+    } else {
+      command.reject(`No snapshot option for camera ${command.camid}`)
+    }
+    /*
     jpeg(undefined, 10)
       .then((data) => saveJpeg(data))
       .catch((msg) => console.log(msg));
+      */
   }
 });
 
