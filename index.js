@@ -592,7 +592,7 @@ plugin.on('command', (command) => {
             const filename = `snap_${Date.now()}.jpg`;
             try {
               fs.writeFileSync(path + filename, data);
-              command.resolve({ filename });
+              command.resolve({ filename: path + filename });
             } catch (e) {
               command.reject(e.message);
             }
